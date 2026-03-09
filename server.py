@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 from flask import Flask, redirect, request
 import razorpay
 import requests
