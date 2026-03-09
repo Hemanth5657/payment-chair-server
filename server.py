@@ -17,12 +17,9 @@ def home():
 @app.route("/webhook", methods=["GET","POST"])
 def webhook():
 
-    data = request.json
-    print("Webhook received:", data)
+    print("Webhook triggered")
 
-    if data and data.get("event") == "payment.captured":
-        print("Payment Success")
-        device_status["chair_01"] = "ON"
+    device_status["chair_01"] = "ON"
 
     return {"status": "ok"}
 
@@ -37,6 +34,7 @@ def device(device_id):
         return "ON"
 
     return "OFF"
+
 
 import os
 
