@@ -1,64 +1,43 @@
-from flask import Flask, redirect, request
+from flask import Flask, request
 import razorpay
-import requests
 
 app = Flask(__name__)
 
-# Razorpay API keys
-client = razorpay.Client(auth=("YOUR_KEY_ID", "YOUR_SECRET"))
+client = razorpay.Client(auth=("rzp_test_SP4S084OvRUPj2", "yjBcrsjg1dodn8j3BWdVuxYE"))
 
-# NodeMCU IP
-ESP_IP = "192.168.137.31"
+device_status = {
+    "chair_01": "OFF"
+}
 
-last_payment_id = None
-
-
-# QR scan route
-@app.route("/pay")
-def pay():
-
-    order = client.order.create({
-        "amount": 100,   # ₹1 = 100 paise
-        "currency": "INR",
-        "payment_capture": 1
-    })
-
-    order_id = order["id"]
-
-    payment_url = f"https://checkout.razorpay.com/v1/checkout.js?order_id={order_id}"
-
-    return redirect(payment_url)
+@app.route("/")
+def home():
+    return "Server Running"
 
 
-# Razorpay webhook
-@app.route('/webhook', methods=['POST'])
+@app.route("/webhook", methods=["POST"])
 def webhook():
-
-    global last_payment_id
 
     data = request.json
     print("Webhook received:", data)
 
     if data and data.get("event") == "payment.captured":
-
-        payment = data["payload"]["payment"]["entity"]
-        payment_id = payment["id"]
-
-        if payment_id == last_payment_id:
-            print("Duplicate ignored")
-            return {"status": "duplicate"}
-
-        last_payment_id = payment_id
-
         print("Payment Success")
-
-        try:
-            requests.get(f"http://{ESP_IP}/start")
-            print("Relay Trigger Sent")
-        except:
-            print("ESP not reachable")
+        device_status["chair_01"] = "ON"
 
     return {"status": "ok"}
 
 
-app.run(host="0.0.0.0", port=5000)
+@app.route("/device/<device_id>")
+def device(device_id):
+
+    status = device_status.get(device_id, "OFF")
+
+    if status == "ON":
+        device_status[device_id] = "OFF"
+        return "ON"
+
+    return "OFF"
+
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)
